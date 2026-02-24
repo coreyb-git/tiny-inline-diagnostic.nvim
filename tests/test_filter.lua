@@ -286,13 +286,13 @@ T["for_display"]["filters by multilines.severity when always_show is false"] = f
   end)
 end
 
-T["for_display"]["show_diags_only_under_cursor with multilines shows under cursor on current line and all on other lines"] = function()
+T["for_display"]["show_diags_only_under_cursor takes precedence over multilines"] = function()
   H.with_win_buf({ "line1", "line2", "line3" }, { 2, 0 }, nil, function(buf)
     local diagnostics = {
-      H.make_diagnostic({ lnum = 0, col = 0, end_col = 5 }), -- line 1
-      H.make_diagnostic({ lnum = 0, col = 10, end_col = 15 }), -- line 1, not under cursor
-      H.make_diagnostic({ lnum = 1, col = 0, end_col = 5 }), -- line 2 (current line)
-      H.make_diagnostic({ lnum = 2, col = 0, end_col = 5 }), -- line 3
+      H.make_diagnostic({ lnum = 0, col = 0, end_col = 5 }),
+      H.make_diagnostic({ lnum = 0, col = 10, end_col = 15 }),
+      H.make_diagnostic({ lnum = 1, col = 0, end_col = 5 }), -- current line, under cursor
+      H.make_diagnostic({ lnum = 2, col = 0, end_col = 5 }),
     }
 
     local result = filter.for_display({
@@ -302,16 +302,9 @@ T["for_display"]["show_diags_only_under_cursor with multilines shows under curso
       },
     }, buf, diagnostics)
 
-    -- Should show: all from line 1 (other line), 1 diag from line 2 (under cursor), 1 from line 3
-    MiniTest.expect.equality(#result, 4)
-    -- Check that we have diagnostics from all lines
-    local lines = {}
-    for _, diag in ipairs(result) do
-      lines[diag.lnum] = (lines[diag.lnum] or 0) + 1
-    end
-    MiniTest.expect.equality(lines[0], 2) -- line 1
-    MiniTest.expect.equality(lines[1], 1) -- line 2 (current)
-    MiniTest.expect.equality(lines[2], 1) -- line 3
+    -- cursor-only mode ignores multilines: only the diagnostic under cursor is shown
+    MiniTest.expect.equality(#result, 1)
+    MiniTest.expect.equality(result[1].lnum, 1)
   end)
 end
 

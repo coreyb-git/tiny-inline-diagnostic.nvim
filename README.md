@@ -334,6 +334,13 @@ diag.enable()
 diag.disable()
 diag.toggle()
 
+-- Toggle display modes at runtime
+diag.toggle_cursor_only()            -- Toggle between cursor-only and default display
+diag.toggle_all_diags_on_cursorline() -- Toggle showing all diagnostics on cursor line
+
+-- Reset all options to the values defined in setup()
+diag.reset()
+
 -- Filter severities
 diag.change_severities({ vim.diagnostic.severity.ERROR, vim.diagnostic.severity.WARN })
 ```
@@ -343,9 +350,12 @@ diag.change_severities({ vim.diagnostic.severity.ERROR, vim.diagnostic.severity.
 The plugin provides a user command for controlling diagnostic display:
 
 ```vim
-:TinyInlineDiag enable   " Enable inline diagnostics
-:TinyInlineDiag disable  " Disable inline diagnostics
-:TinyInlineDiag toggle   " Toggle inline diagnostics on/off
+:TinyInlineDiag enable                        " Enable inline diagnostics
+:TinyInlineDiag disable                       " Disable inline diagnostics
+:TinyInlineDiag toggle                        " Toggle inline diagnostics on/off
+:TinyInlineDiag toggle_cursor_only            " Toggle showing diagnostics only under cursor
+:TinyInlineDiag toggle_all_diags_on_cursorline " Toggle showing all diagnostics on cursor line
+:TinyInlineDiag reset                         " Reset all options to setup() values
 ```
 
 You can map these to keybindings for quick access:
@@ -354,6 +364,8 @@ You can map these to keybindings for quick access:
 vim.keymap.set("n", "<leader>de", "<cmd>TinyInlineDiag enable<cr>", { desc = "Enable diagnostics" })
 vim.keymap.set("n", "<leader>dd", "<cmd>TinyInlineDiag disable<cr>", { desc = "Disable diagnostics" })
 vim.keymap.set("n", "<leader>dt", "<cmd>TinyInlineDiag toggle<cr>", { desc = "Toggle diagnostics" })
+vim.keymap.set("n", "<leader>dc", "<cmd>TinyInlineDiag toggle_cursor_only<cr>", { desc = "Toggle cursor-only diagnostics" })
+vim.keymap.set("n", "<leader>dr", "<cmd>TinyInlineDiag reset<cr>", { desc = "Reset diagnostic options" })
 ```
 
 ### Auto-Disable on Float

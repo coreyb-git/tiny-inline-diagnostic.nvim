@@ -157,6 +157,7 @@ function M.setup(opts)
   config = normalize_config(config)
 
   M.config = config
+  M._original_options = vim.deepcopy(config.options)
 
   hi.setup_highlights(config.blend, config.hi, config.transparent_bg)
 
@@ -207,6 +208,17 @@ function M.toggle()
   diag.toggle()
 end
 
+local function re_render_all_buffers()
+  vim.schedule(function()
+    local renderer = require("tiny-inline-diagnostic.renderer")
+    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
+        renderer.safe_render(M.config, bufnr)
+      end
+    end
+  end)
+end
+
 ---Change diagnostic severities
 ---@param severities table New severity settings
 function M.change_severities(severities)
@@ -227,19 +239,41 @@ function M.change_severities(severities)
   end
 
   M.config.options.severity = severities
-
-  vim.schedule(function()
-    local renderer = require("tiny-inline-diagnostic.renderer")
-    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
-        renderer.safe_render(M.config, bufnr)
-      end
-    end
-  end)
+  re_render_all_buffers()
 end
 
 function M.get_diagnostic_under_cursor()
   return diag.get_diagnostic_under_cursor()
+end
+
+---@param key string
+local function toggle_option(key)
+  if not M.config then
+    error("Plugin not initialized. Call setup() first.")
+    return
+  end
+  M.config.options[key] = not M.config.options[key]
+  re_render_all_buffers()
+end
+
+--- Toggle showing diagnostics only when cursor is exactly on them.
+function M.toggle_cursor_only()
+  toggle_option("show_diags_only_under_cursor")
+end
+
+--- Toggle showing all diagnostics on the cursor line regardless of cursor column.
+function M.toggle_all_diags_on_cursorline()
+  toggle_option("show_all_diags_on_cursorline")
+end
+
+--- Restore all options to the values defined in setup().
+function M.reset()
+  if not M.config or not M._original_options then
+    error("Plugin not initialized. Call setup() first.")
+    return
+  end
+  M.config.options = vim.deepcopy(M._original_options)
+  re_render_all_buffers()
 end
 
 ---@param action string
@@ -250,11 +284,14 @@ local function handle_command(action)
     M.disable()
   elseif action == "toggle" then
     M.toggle()
+  elseif action == "toggle_cursor_only" then
+    M.toggle_cursor_only()
+  elseif action == "toggle_all_diags_on_cursorline" then
+    M.toggle_all_diags_on_cursorline()
+  elseif action == "reset" then
+    M.reset()
   else
-    vim.notify(
-      "Invalid action: " .. action .. ". Use 'enable', 'disable', or 'toggle'.",
-      vim.log.levels.ERROR
-    )
+    vim.notify("Invalid action: " .. action, vim.log.levels.ERROR)
   end
 end
 
@@ -264,7 +301,7 @@ local function setup_commands()
   end, {
     nargs = 1,
     complete = function()
-      return { "enable", "disable", "toggle" }
+      return { "enable", "disable", "toggle", "toggle_cursor_only", "toggle_all_diags_on_cursorline", "reset" }
     end,
     desc = "Control tiny-inline-diagnostic display",
   })

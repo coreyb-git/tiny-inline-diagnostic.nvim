@@ -135,24 +135,12 @@ end
 ---@param diagnostics table
 ---@return table
 function M.for_display(opts, bufnr, diagnostics)
-  if not opts.options.multilines.enabled then
+  if opts.options.show_diags_only_under_cursor then
     return M.under_cursor(opts, bufnr, diagnostics)
   end
 
-  if opts.options.show_diags_only_under_cursor then
-    local cursor_pos = vim.api.nvim_win_get_cursor(0)
-    local current_line = cursor_pos[1] - 1
-
-    local under_cursor_on_line = M.at_position(opts, diagnostics, current_line, cursor_pos[2])
-
-    local other_diags = vim.tbl_filter(function(diag)
-      return diag.lnum ~= current_line
-    end, diagnostics)
-
-    local result = vim.list_extend({}, under_cursor_on_line)
-    vim.list_extend(result, other_diags)
-    result = M.by_severity(opts, result)
-    return add_related_diagnostics(opts, result)
+  if not opts.options.multilines.enabled then
+    return M.under_cursor(opts, bufnr, diagnostics)
   end
 
   if opts.options.multilines.always_show then
