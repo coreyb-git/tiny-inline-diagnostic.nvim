@@ -32,8 +32,8 @@ end
 ---@param throttle_apply function
 ---@param direct_apply function
 function M.setup_cursor_autocmds(autocmd_ns, opts, bufnr, throttle_apply, direct_apply)
-  local events = opts.options.enable_on_insert and { "CursorMoved", "CursorMovedI" }
-    or { "CursorMoved" }
+  local events = opts.options.enable_on_insert and { "CursorHold", "CursorMovedI" }
+    or { "CursorHold" }
 
   vim.api.nvim_create_autocmd(events, {
     group = autocmd_ns,
